@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luca Putaro | Lead list enrichment, live</title>
+<meta name="description" content="Paste a list of company websites and watch each column fill from free public sources in a fixed order: an enrichment waterfall, with clean-up, target-customer rules and CSV export.">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top">
+  <a class="who" href="/">Luca Putaro</a>
+  <nav><a href="#how">How it works</a></nav>
+</header>
+
+<main>
+<section class="hero">
+  <h1>Paste a list of companies.<br>Watch every column fill itself.</h1>
+  <p class="lede">Go-to-market teams live in spreadsheets of accounts. I build the part that turns a bare list of websites into rows a salesperson can act on. Every cell below is filled live from free public sources, and every cell tells you where it came from.</p>
+  <div class="hero-go">
+    <button type="button" id="try-example">Run the example list</button>
+    <span class="hint">20 well-known software companies, with duplicates and a broken entry mixed in on purpose. Takes about 20 seconds. Or <a href="#list-title">paste your own list</a>.</span>
+  </div>
+</section>
+
+<section class="falls" aria-labelledby="falls-title">
+  <h2 id="falls-title">The idea: a waterfall</h2>
+  <p class="falls-lede">Each column has several sources, always asked in the same order. If the first one has nothing, the next one is asked. The first answer wins and the rest are skipped. Here is the column “Email provider”:</p>
+  <ol class="fall" aria-label="Example waterfall for the email provider column">
+    <li><b>1</b><span><strong>MX record</strong>Where the company’s email is delivered. Usually names the provider directly.</span></li>
+    <li><b>2</b><span><strong>SPF record</strong>Asked only if step 1 found a spam filter or an unknown server. Lists who may send mail for the company.</span></li>
+    <li><b>3</b><span><strong>MX host as-is</strong>Last resort: show the raw mail server, so the cell is never silently empty.</span></li>
+  </ol>
+  <p class="falls-note">In paid tools every source costs credits, so the order saves money. Here every source is free, so the order is about trust: the most reliable source goes first. The small number in each cell shows which step answered. Click any cell to see the whole chain.</p>
+</section>
+
+<section class="input" aria-labelledby="list-title">
+  <h2 id="list-title">Your list</h2>
+  <form id="list-form" autocomplete="off">
+    <label for="list">One website per line (commas work too). Up to 25.</label>
+    <textarea id="list" rows="7" spellcheck="false" placeholder="acme.com&#10;https://www.example-company.de&#10;..."></textarea>
+    <div class="actions">
+      <button type="submit" id="run">Enrich this list</button>
+      <button type="button" id="example" class="ghost">Load example list (20 companies)</button>
+      <span id="list-note" class="hint"></span>
+    </div>
+    <p class="hint">The example list is the websites of well-known software companies, picked by me for the demo, with messy spellings, duplicates and a broken entry mixed in on purpose. None of them is a client. Nothing you paste is stored.</p>
+  </form>
+</section>
+
+<section class="work" aria-label="Results">
+  <div class="bar">
+    <div class="progress" aria-live="polite"><span id="progress-text">No list yet.</span><span class="meter"><i id="progress-bar" style="width:0%"></i></span></div>
+    <button type="button" id="export" class="ghost" disabled>Export CSV</button>
+  </div>
+
+  <fieldset class="icp" id="icp">
+    <legend>Target customer rules <span>Switch rules on. Rows sort by how many they meet, and each row says why.</span></legend>
+    <div class="rules-row" id="rules"></div>
+  </fieldset>
+
+  <div class="table-wrap" tabindex="0" aria-label="Enriched list">
+    <table class="grid">
+      <thead id="thead"></thead>
+      <tbody id="tbody"><tr><td class="placeholder" colspan="12">Load the example list or paste your own, then press “Enrich this list”.</td></tr></tbody>
+    </table>
+  </div>
+  <p class="legend"><span class="chip s1">1</span> first source answered <span class="chip s2">2</span> a fallback had to answer <span class="chip ai">AI</span> written by a language model <span class="chip tpl">T</span> written by a template</p>
+
+  <aside class="inspect" id="inspect" aria-live="polite">
+    <p class="empty">Click any filled cell to see its waterfall: which sources were asked, in what order, what each one said and how long it took.</p>
+  </aside>
+</section>
+
+<section id="how" class="rules">
+  <h2>How I build these for clients</h2>
+  <dl>
+    <div><dt>Every cell names its source.</dt><dd>A rep who cannot tell where a number came from will not trust the list. The source and the evidence travel with the value, all the way into the CSV.</dd></div>
+    <div><dt>Missing data is not a no.</dt><dd>“No CRM visible” is not the same as “does not use HubSpot”, and finding Salesforce does not rule HubSpot out. A DNS verification record shows a HubSpot account, so the cell says “HubSpot signal found”, but the rule “Uses HubSpot” stays open until a script or mail record proves it. A company is never ranked up or down on a guess.</dd></div>
+    <div><dt>Clean the list before you pay for it.</dt><dd>Duplicates in a different spelling are caught before any lookup runs. Duplicates that only show after a redirect are caught after. Broken rows are marked, not dropped.</dd></div>
+    <div><dt>The model writes. Rules decide.</dt><dd>The language model only drafts one opening line. Filtering and ranking are fixed rules you can read. Every number in the line must match a fact in the row, both the value and what it counts: “20 offices” fails when the row says 200 employees. If a claim cannot be backed, or the model is down, a template writes the line and the cell says so.</dd></div>
+  </dl>
+  <h2 class="sources-title">The sources</h2>
+  <dl class="sources">
+    <div><dt>The company homepage</dt><dd>Read once per row. Script addresses reveal tools such as HubSpot, button texts reveal the sales motion. Sites that block automated visitors are respected and fall through to the next source.</dd></div>
+    <div><dt>DNS, over HTTPS</dt><dd>MX, SPF and verification records from Cloudflare’s 1.1.1.1, with Google’s resolver as the fallback. Public by design, free, no key.</dd></div>
+    <div><dt>Wikidata</dt><dd>Matched on the company’s official website, never on its name, so a namesake cannot slip in. Gives country, headcount and LinkedIn page when someone has entered them.</dd></div>
+    <div><dt>Workers AI</dt><dd>Cloudflare’s free tier with a hard daily limit. Writes the opening line from the facts in the row and nothing else.</dd></div>
+  </dl>
+</section>
+</main>
+
+<footer>
+  <p>Built by Luca Putaro on Cloudflare Workers. No database, no cookies, no tracking.</p>
+  <p><a href="https://gtm-os.lucaputaro.workers.dev">Project 1: a sales funnel, live</a> · <a href="/imprint.html">Impressum</a> · <a href="/privacy.html">Datenschutz</a></p>
+</footer>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

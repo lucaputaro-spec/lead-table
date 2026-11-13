@@ -1,0 +1,23 @@
+{
+  // Workers Free: 100.000 Anfragen/Tag, 50 Unterabrufe je Anfrage.
+  // Workers AI Free: 10.000 Neuronen/Tag (ein Aufhänger-Satz kostet grob
+  // 15 Neuronen). Beim Überschreiten gibt es Fehler, keine Rechnung. Dann
+  // schreibt die Vorlage in src/ai.ts den Satz, die Tabelle läuft weiter.
+  "name": "lead-table",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "ai": { "binding": "AI" },
+  // Bremse je Besucher: eine Liste mit 25 Zeilen braucht 50 Anfragen
+  // (Anreichern + Aufhänger). Cloudflare zählt nur ungefähr.
+  "ratelimits": [
+    { "name": "LIMITER", "namespace_id": "4712", "simple": { "limit": 60, "period": 60 } }
+  ],
+  "vars": { "AI_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct" },
+  "observability": { "enabled": false }
+}
